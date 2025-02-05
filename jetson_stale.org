@@ -1,0 +1,85 @@
+#+TITLE: Nvidia Jetson Setup
+
+* Introduction
+
+This file is not being updated, but is retained for reference. You are no longer likely to get a working version of edge-ai on the jetson by following these notes. My suggestion is to use sdkmanager and jetpack to handle OS package installation for you as in README.org
+
+See https://developer.nvidia.com/embedded/learn/get-started-jetson-agx-orin-devkit
+
+We have standardised on Jetson Linux r35.3
+
+#+begin_src bash :results output :exports both
+  cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
+#+end_src
+
+#+RESULTS:
+#+begin_example
+# SPDX-FileCopyrightText: Copyright (c) 2019-2021 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-NvidiaProprietary
+#
+# NVIDIA CORPORATION, its affiliates and licensors retain all intellectual
+# property and proprietary rights in and to this material, related
+# documentation and any modifications thereto. Any use, reproduction,
+# disclosure or distribution of this material and related documentation
+# without an express license agreement from NVIDIA CORPORATION or
+# its affiliates is strictly prohibited.
+
+deb https://repo.download.nvidia.com/jetson/common r35.3 main
+deb https://repo.download.nvidia.com/jetson/t234 r35.3 main
+#+end_example
+
+* Top Secret Password
+
+=PI10PI10=
+
+* Adding users
+
+#+begin_src bash
+  sudo adduser jas
+  sudo usermod -aG sudo jas
+#+end_src
+
+* Accessing GitHub
+
+Download the release package =gh_2.30.0_linux_arm64.tar.gz= from https://github.com/cli/cli - See the releases page, It's called =GitHub CLI 2.30 linux armv6=.
+
+Extract it under =~/local= using =tar -zxvf gh_2.30.0_linux_arm64.tar.gz=. Then run =./gh auth login= to set up your GitHub credentials.
+
+* Python
+
+We use Python pip as follows:
+
+** Create an environment
+
+#+begin_src bash
+  python3 -m venv env
+#+end_src
+
+** Activate
+
+#+begin_src bash
+  source env/bin/activate
+#+end_src
+
+** Install requirements
+
+#+begin_src bash
+  pip install -r requirements.txt
+#+end_src
+
+You might get an error about TorchVison, but you can ignore that.
+
+** Test
+
+We include a script =check_torch.py= to validate Torch is running on CUDA.
+
+#+begin_src bash :results output :exports both
+  ./check_torch.py
+#+end_src
+
+#+RESULTS:
+#+begin_example
+torch.cuda.is_available() : True
+torch.cuda.get_device_name(0) : Orin
+torch.cuda.current_device() : 0
+#+end_example
