@@ -1,37 +1,38 @@
-#+TITLE: Plankton Imager Edge-AI
+markdown_content = """\
+# Plankton Imager Edge-AI
 
-* Introduction
+## Introduction
 
-This directory contains the Python code for the Plankton Imager Edge AI system, supported by the Turing Institute. It operates on an nvidia jetson by listening to the image stream from a plankton imager "PI10" model. 
-The AI model training and validation code is in a separate repository, see https://github.com/alan-turing-institute/ViT-LASNet
+This directory contains the Python code for the Plankton Imager Edge AI system, supported by the Turing Institute. It operates on an NVIDIA Jetson by listening to the image stream from a plankton imager "PI10" model.  
+The AI model training and validation code is in a separate repository, see [ViT-LASNet](https://github.com/alan-turing-institute/ViT-LASNet).
 
-
-Features include
+Features include:
 
 - UDP listener that receives images from the PI10 instrument.
+- Two classifiers - a ResNet50 and a ResNet18 that can discriminate copepod, non-copepod, and detritus.
+- Ability to store images in bin files (faster than writing individual images).
+- Sending of summary data to Azure storage for use by a digital dashboard.
+- Display of labelled images.
+- Parsing of GPS data.
+- Extraction of morphological measurements.
 
-- Two classifiers - a ResNet50 and a ResNet18 that can discriminate
-  copepod, non-copepod and detritus.
+## Installation: Linux
 
-- Ability to store images in bin files (faster than writing individual
-  images).
+### Install Python environment
 
-- Sending of summary data to Azure storage for use by a digital
-  dashboard.
+This has been tested on Python 3.8.10 (Linux) and 3.11.0 (Windows).
 
-- Display of labelled images
+Linux tested using this version of Python:
 
-- Parsing of GPS data
-
-- Extraction of morphological measurements
+```bash
+wget https://www.python.org/ftp/python/3.8.10/Python-3.8.10.tar.xz
 
 
 
 
+# Installation: Linux
 
-* Installation: Linux
-
-** Install Python environment, this has been tested on 3.8.10 (linux) and 3.11.0 (windows)
+## Install Python environment, this has been tested on 3.8.10 (linux) and 3.11.0 (windows)
 
 Linux tested using this version of python:
 wget https://www.python.org/ftp/python/3.8.10/Python-3.8.10.tar.xz
@@ -83,9 +84,9 @@ Once in (env), on Linux test with:
 
 
 
-* Installation: Windows
+# Installation: Windows
 
-** Install Python environment, tested on python 3.11.0 for windows
+## Install Python environment, tested on python 3.11.0 for windows
 
 Install python 3.11.0 as tested on my Windows PC using MINGW64 bash on VS:
 wget https://www.python.org/ftp/python/3.11.0/python-3.11.0.exe
@@ -127,8 +128,8 @@ Once in (env), on Windows test on the command line with:
 
 
 
-* Usage
-** Help
+# Usage
+## Help
 
 Features are switched on or off and configured by means of command
 line arguments. For more informations see:
@@ -150,9 +151,9 @@ work, type =CTRL-C=.
 
 
 
-* Here are some typical use cases
+# Here are some typical use cases
 
-** Fast storage of images
+## Fast storage of images
 
 Plug in your external hard drive and change directory to where you
 want to store your data. Run this command:
@@ -164,7 +165,7 @@ want to store your data. Run this command:
 Images are stored in =bin= files. these can be split up later into
 tiff file using the supplied =split_bin.py= script.
 
-** Local classification
+## Local classification
 
 Run the classifier. Use background correction.
 
@@ -174,7 +175,7 @@ Run the classifier. Use background correction.
 
 Counts of copepod, non-copepod and detritus per minute are logged to a file.
 
-** Real time reporting to the NOC digital dashboard
+## Real time reporting to the NOC digital dashboard
 
 Use the ResNet18 algorithm =--gray== developed by NOC and send results
 to their digital dashboard.
@@ -185,8 +186,8 @@ to their digital dashboard.
 
 
 
-* Running processing of .tif folders in parallel, using 12 cpu cores
-** In bash, define a function to run per-core. Done here for individual folders at a time. This seems to achieve close to 100% cpu utilisation on the jetson, so to make it faster, we need to make extractor.py simpler or run on more processors.
+# Running processing of .tif folders in parallel, using 12 cpu cores
+## In bash, define a function to run per-core. Done here for individual folders at a time. This seems to achieve close to 100% cpu utilisation on the jetson, so to make it faster, we need to make extractor.py simpler or run on more processors.
 #+begin_src
   process_folder() {
       folder="$1"
@@ -196,7 +197,7 @@ to their digital dashboard.
   }
   export -f process_folder
 #+end_src
-*** Pass the folder names with pipe to be executed with xargs across the 12 cores.
+### Pass the folder names with pipe to be executed with xargs across the 12 cores.
 #+begin_src
   find /home/joe/Downloads/deleteme/dups/duplicates/duplicated/ -type d | xargs -P 12 -I {} bash -c 'process_folder "$@"' _ {}
 #+end_src
@@ -206,8 +207,8 @@ to their digital dashboard.
 
 
 
-* Running processing of .tif folders in parallel, using 12 cpu cores
-** In bash, define a function to run per-core. Done here for individual folders at a time. This seems to achieve close to 100% cpu utilisation on the jetson, so to make it faster, we need to make extractor.py simpler or run on more processors. It took 19 minutes to run 1 million files in a folder called deleteme, nearly 1000/second.
+# Running processing of .tif folders in parallel, using 12 cpu cores
+## In bash, define a function to run per-core. Done here for individual folders at a time. This seems to achieve close to 100% cpu utilisation on the jetson, so to make it faster, we need to make extractor.py simpler or run on more processors. It took 19 minutes to run 1 million files in a folder called deleteme, nearly 1000/second.
 #+begin_src
   apply_size_folder() {
       folder="$1"
@@ -217,14 +218,14 @@ to their digital dashboard.
   }
   export -f apply_size_folder
 #+end_src
-*** Pass the folder names with pipe to be executed with xargs across the 12 cores.
+### Pass the folder names with pipe to be executed with xargs across the 12 cores.
 #+begin_src
   find /home/joe/Downloads/deleteme/ -type d | xargs -P 12 -I {} bash -c 'apply_size_folder "$@"' _ {}
 #+end_src
 
 
 
-** Running in parallel for gps.py. Again using nearly 100% cpu this took 3 or 4 minutes for 1m files.
+## Running in parallel for gps.py. Again using nearly 100% cpu this took 3 or 4 minutes for 1m files.
 #+begin_src
   apply_gps_folder() {
       folder="$1"
@@ -234,7 +235,7 @@ to their digital dashboard.
   }
   export -f apply_gps_folder
 #+end_src
-*** Pass the folder names with pipe to be executed with xargs across the 12 cores.
+### Pass the folder names with pipe to be executed with xargs across the 12 cores.
 #+begin_src
   find /home/joe/Downloads/deleteme/ -type d | xargs -P 12 -I {} bash -c 'apply_gps_folder "$@"' _ {}
 #+end_src
@@ -242,7 +243,7 @@ to their digital dashboard.
 
 
 
-** Running in parallel for classify.py. This runs on the GPU but still seems to use 100% of the avilable cpu. Batch size is important here, I have set to 500 as the jetson crashed when I chose 1000. 100k files took less than 40 mins, possibly less.
+## Running in parallel for classify.py. This runs on the GPU but still seems to use 100% of the avilable cpu. Batch size is important here, I have set to 500 as the jetson crashed when I chose 1000. 100k files took less than 40 mins, possibly less.
 
 classify.py should be used differently to get the most out of it.
 Within a single folder, classify.py could be applied like so:
@@ -261,9 +262,9 @@ Therefore in addition to using batching (-b) I have added a command line option 
 
 
 
-* Notes on NVIDIA Jetson
+# Notes on NVIDIA Jetson
 Our target hardware is NVIDIA Jetson AGX Orin.
-** Please be aware
+## Please be aware
 Before reinstalling the OS in the case of a jetson that seemingly won't boot, firstly aways question whether the DP-HDMI adapter is working. Plugging in directly with DP and NO ADAPTER may be the fix you need if it seems that the jetson is bricked.
 It is normal to get an unresponsive green nvidia symbol when SSH'ing in with X or VNC if it is not already plugged into a screen! This also does not mean it is bricked.
 Lastly in this process, do not use cefas guest wifi for anything, the various firmware downloads will constantly fail, instead use a hotspot off your laptop after plugging it in to the building ethernet.
@@ -281,7 +282,7 @@ Rob Blackwell did not use sdkmanager and jetpack to set up the Jetson. Unfortuna
 
 
 
-** To auto run the jetson
+## To auto run the jetson
 I recommend you search and select "startup applications preferences" and add the following commands:
 #+begin_src
 	gnome-terminal -- sh git/rapid-plankton/edge-ai/startup1.sh
