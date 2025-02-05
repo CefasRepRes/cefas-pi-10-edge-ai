@@ -1,4 +1,3 @@
-markdown_content = """\
 # Plankton Imager Edge-AI
 
 ## Introduction
@@ -15,19 +14,6 @@ Features include:
 - Display of labelled images.
 - Parsing of GPS data.
 - Extraction of morphological measurements.
-
-## Installation: Linux
-
-### Install Python environment
-
-This has been tested on Python 3.8.10 (Linux) and 3.11.0 (Windows).
-
-Linux tested using this version of Python:
-
-```bash
-wget https://www.python.org/ftp/python/3.8.10/Python-3.8.10.tar.xz
-
-
 
 
 # Installation: Linux
