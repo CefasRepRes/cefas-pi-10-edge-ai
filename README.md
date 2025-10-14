@@ -15,6 +15,21 @@ Features include:
 - Parsing of GPS data.
 - Extraction of morphological measurements.
 
+# Installation
+
+This code expects that you have CUDA installed. To check this, run in command prompt / terminal:
+nvcc --version
+If you have a version of cuda greater than 12.1, it should work to use the code as it is below. i.e. https://download.pytorch.org/whl/cu121
+You are then able to go ahead and install the requirements. First, clone this repository of code.
+
+Some things in the code need to be defined. You can pass in the azure endpoint for the plankton dashboard here (or as an envionmental variable):
+https://github.com/CefasRepRes/cefas-pi-10-edge-ai/blob/main/config.py
+
+Also create an ipconfig.txt in cefas-pi-10-edge-ai/blob/main/ipconfig.txt and define this based on your network port for the PI in the style:
+UDP_IP = 192.168.0.100
+UDP_PORT = 10001
+
+Note the actual UDP IP and port is specific to your setup and is defined in the PI.
 
 # Installation: Linux
 
