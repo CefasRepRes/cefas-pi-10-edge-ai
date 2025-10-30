@@ -19,7 +19,8 @@ from struct import *
 import argparse
 import background
 import classifier
-import display
+#import display
+from display import display
 import cv2
 import exif
 import extractor
@@ -43,6 +44,7 @@ import time
 import csv
 import base64
 import copy
+import struct
 
 def shorten_and_unique_labels(labels):
     if isinstance(labels, list):
@@ -139,10 +141,23 @@ def parse(data, ring):
 
     image = None
     hitsmisses = None
+    
+    # --- MINIMAL WINDOWS-SAFE HEADER FIX ---
+    # Ensure we have a full 24-byte header before unpacking
+    if len(data) < 24:
+        logging.warning(f"Received truncated packet (len={len(data)}); skipping")
+        return None, None, None
 
-    hash, field, part, unique_id, total_parts, data_size, tag, pack1, pack2 = unpack(
-        "IHHLHHHcc", data[0:24]
-    )
+    try:
+        # Using explicit little-endian + fixed sizes:
+        # I(4) H(2) H(2) Q(8) H(2) H(2) H(2) c(1) c(1)  => 24 bytes total
+        hash, field, part, unique_id, total_parts, data_size, tag, pack1, pack2 = unpack(
+        "<IHHQHHHcc", data[0:24])
+        
+    except struct.error as e:
+         logging.error(f"Header unpack failed: {e}; len(data)={len(data)}")
+         return None, None, None
+    # --- END HEADER FIX ---
 
     logging.debug(f"{hash},{field},{part},{unique_id},{total_parts},{data_size},{tag}")
 
@@ -365,7 +380,8 @@ def start_processor(message_queue, args):
                 #with summary_stats_queue.mutex:
                 #    logging.info(f"Queued data {summary_stats_queue.queue}")       # To look at what is in the queue         
                 stats = summary_stats_queue.get()
-                logging.info(f"Sending queued data {stats['time_start']}")
+                #logging.info(f"Sending queued data {stats['time_start']}")
+                logging.info(f"Sending queued data {stats}")
                 communication_attempt = sender.send(stats)
                 if communication_attempt == 0:
                     logging.info(f"Failed to send queued data, putting back in the queue: {stats['time_start']}")

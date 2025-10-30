@@ -19,5 +19,5 @@ protocol_version = "0.0.3"
 # connstr = os.environ["SERVICE_BUS_CONNECTION_STR"]
 # queue_name = os.environ["SERVICE_BUS_QUEUE_NAME"]
 
-connstr = "Endpoint=sb://cit-rd-plankton-svcbus.servicebus.windows.net/;SharedAccessKeyName=RVSend;SharedAccessKey=something_like_Debq0m294NwrRu+SyDBeD/REAvzC7JVBD+ASbMTxons="
+connstr = "Endpoint=sb://cit-rd-plankton-svcbus.servicebus.windows.net/;SharedAccessKeyName=RVSend;SharedAccessKey=fdBBTEQryFa+dNUd7OXST4hwjLYHX0rjI+ASbGnJT3E="
 queue_name = "rv-dashboard"
