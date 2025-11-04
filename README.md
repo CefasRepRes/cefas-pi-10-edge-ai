@@ -1,5 +1,7 @@
 # Plankton Imager Edge-AI
 
+Find a detached windows fork here: https://github.com/AminNmr/cefas-pi-10-edge-ai
+
 ## Introduction
 
 This directory contains the Python code for the Plankton Imager Edge AI system, supported by the Turing Institute. It operates on an NVIDIA Jetson by listening to the image stream from a plankton imager "PI10" model.  
