@@ -1,0 +1,51 @@
+model:
+  architecture: resnet18
+  pretrained: true
+data:
+  image_size:
+  - 256
+  - 256
+  normalisation: imagenet
+training:
+  batch_size: 64
+  epochs: 4
+  learning_rate: 0.00005
+  optimizer: adam
+  weight_decay: 0.0001
+  num_workers: 8
+  val_fraction: 0.2
+  seed: 1337
+  early_stopping:
+    enabled: true
+    monitor: val_loss
+    mode: min
+    patience: 5
+    min_delta: 0.0
+    warmup_epochs: 1
+  logging:
+    curve_csv: training_curve.csv
+    curve_png: training_curve.png
+    confusion_matrix_csv: confusion_matrix.csv
+    confusion_matrix_png: confusion_matrix.png
+  loss:
+    name: cross_entropy   # cross_entropy | focal
+    focal_gamma: 2.0      # used when name == focal
+  class_weighting:
+    enabled: false
+    minority:
+      mode: bottom_k      # bottom_k | below_fraction | below_count
+      k: 1                # number of least-frequent classes to upweight
+      fraction: 0.2       # used when mode == below_fraction
+      count: 50           # used when mode == below_count
+      multiplier: 5.0     # P: make minority-class errors ~P-times more expensive
+      min_count: 1        # ignore classes with < min_count samples
+  threshold_calibration:
+    enabled: false
+    target: minority      # minority | all | list
+    objective: min_cost   # min_cost | maximize_fbeta
+    fn_cost: 5.0          # used when objective == min_cost
+    fp_cost: 1.0          # used when objective == min_cost
+    beta: 2.0             # used when objective == maximize_fbeta
+    grid_size: 201        # number of thresholds in [0,1]
+output:
+  model_filename: model.pt

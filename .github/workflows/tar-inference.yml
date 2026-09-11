@@ -1,0 +1,133 @@
+name: tar-inference
+on:
+  workflow_dispatch:
+    inputs:
+      run_key:
+        description: Optional stable run key reused across reruns to continue the same operation. Leave blank to generate a UTC timestamp.
+        required: false
+        default: ""
+      target_container:
+        description: Blob container that already stores the TAR files to process
+        required: true
+        default: cend-10-25-megsneps-earlysummer-northsea
+      target_prefix:
+        description: Optional blob-name prefix within the target container
+        required: false
+        default: ""
+      start_date:
+        description: First calendar day to process, inclusive, format YYYY-MM-DD
+        required: true
+        default: "2025-06-01"
+      end_date:
+        description: Last calendar day to process, inclusive, format YYYY-MM-DD
+        required: true
+        default: "2025-06-01"
+      model_blob:
+        description: Model artifact blob name in the trainedmodels container
+        required: true
+        default: model2026-08-19T13-48-44Z.pt
+      sample_ratio:
+        description: Within-TAR sampling ratio, 0.0-1.0, use 1.0 for full TARs
+        required: true
+        default: "1"
+      output_container:
+        description: Blob container used for uploaded JSON summaries
+        required: true
+        default: ml-prediction-results
+      output_prefix:
+        description: Prefix inside the output container for uploaded JSON results
+        required: false
+        default: runs
+      settings_blob:
+        description: Optional model settings blob name. Defaults to modeltrainsettings.json when not provided.
+        required: false
+        default: modeltrainsettings2026-08-14T12-16-30Z.json
+      azure_account_url:
+        description: Storage account URL
+        required: false
+        default: https://citprodc8603uksa.blob.core.windows.net
+      resume_existing:
+        description: Skip TARs where prediction and summary JSON already exist in the output container
+        required: true
+        default: "true"
+permissions:
+  contents: read
+jobs:
+  days:
+    runs-on: ubuntu-latest
+    outputs:
+      days: ${{ steps.make-days.outputs.days }}
+      run_key: ${{ steps.resolve-run-key.outputs.run_key }}
+    steps:
+      - id: resolve-run-key
+        shell: bash
+        run: |
+          if [ -n "${INPUT_RUN_KEY}" ]; then
+            resolved_run_key="${INPUT_RUN_KEY}"
+          else
+            resolved_run_key="inference-$(date -u +'%Y-%m-%dT%H-%M-%SZ')"
+          fi
+          echo "run_key=${resolved_run_key}" >> "$GITHUB_OUTPUT"
+          echo "Resolved run key: ${resolved_run_key}"
+        env:
+          INPUT_RUN_KEY: ${{ github.event.inputs.run_key }}
+      - id: make-days
+        shell: bash
+        run: |
+          python - <<'PY' > days.json
+          from datetime import date, timedelta
+          import json
+          import os
+          start = date.fromisoformat(os.environ["START_DATE"])
+          end = date.fromisoformat(os.environ["END_DATE"])
+          if end < start:
+              raise SystemExit(f"end_date {end} is before start_date {start}")
+          days = []
+          d = start
+          while d <= end:
+              days.append(d.isoformat())
+              d += timedelta(days=1)
+          print(json.dumps(days))
+          PY
+          echo "days=$(cat days.json)" >> "$GITHUB_OUTPUT"
+        env:
+          START_DATE: ${{ github.event.inputs.start_date }}
+          END_DATE: ${{ github.event.inputs.end_date }}
+  inference:
+    needs: days
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        day: ${{ fromJson(needs.days.outputs.days) }}
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 7200
+    env:
+      AZURE_STORAGE_ACCOUNT_URL: ${{ github.event.inputs.azure_account_url }}
+      RUN_KEY: ${{ needs.days.outputs.run_key }}-${{ matrix.day }}
+      TARGET_CONTAINER: ${{ github.event.inputs.target_container }}
+      TARGET_PREFIX: ${{ github.event.inputs.target_prefix }}
+      TARGET_DAY: ${{ matrix.day }}
+      MODEL_BLOB: ${{ github.event.inputs.model_blob }}
+      SAMPLE_RATIO: ${{ github.event.inputs.sample_ratio }}
+      OUTPUT_CONTAINER: ${{ github.event.inputs.output_container }}
+      OUTPUT_PREFIX: ${{ github.event.inputs.output_prefix }}
+      SETTINGS_BLOB: ${{ github.event.inputs.settings_blob }}
+      RESUME_EXISTING: ${{ github.event.inputs.resume_existing }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install inference dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip cache purge || true
+          pip install -r runnerrequirements.txt
+          pip install --index-url https://download.pytorch.org/whl/cu128 torch torchvision
+      - name: Azure login using client secret
+        uses: azure/login@v3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Run TAR inference for one calendar day
+        run: python edge-ai/tar_inference_runner_by_day.py --day "${TARGET_DAY}"

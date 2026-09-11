@@ -1,0 +1,6 @@
+azure-identity>=1.17.0
+azure-storage-blob>=12.20.0
+piexif
+pyvips
+pyvips-binary
+ExifRead

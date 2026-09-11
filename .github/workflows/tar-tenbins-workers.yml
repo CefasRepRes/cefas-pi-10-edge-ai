@@ -1,0 +1,78 @@
+name: tar-tenbins-workers
+on:
+  workflow_dispatch:
+    inputs:
+      run_key:
+        description: Stable run key reused across reruns to continue the same operation
+        required: true
+        default: databox-2483495b-0221-43b8-584a-444434c92e9c
+      source_containers:
+        description: Comma-separated source containers
+        required: true
+        default: databox-2483495b-0221-43b8-584a-444434c92e9c
+      survey_start_date:
+        required: true
+        default: "2023-09-28"
+      survey_end_date:
+        required: true
+        default: "2023-10-31"
+      source_prefix:
+        description: Optional source blob prefix
+        required: false
+        default: ""
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    env:
+      AZURE_STORAGE_ACCOUNT_URL: https://citprodc8603uksa.blob.core.windows.net
+      AZURE_STATE_CONTAINER: github-actions-tenbin-tar-state
+      TENBIN_RUN_KEY: ${{ github.event.inputs.run_key }}
+      SOURCE_CONTAINERS: ${{ github.event.inputs.source_containers }}
+      SOURCE_PREFIX: ${{ github.event.inputs.source_prefix }}
+      SURVEY_START_DATE: ${{ github.event.inputs.survey_start_date }}
+      SURVEY_END_DATE: ${{ github.event.inputs.survey_end_date }}
+      PROBE_EVERY_MINUTE: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -r runnerrequirements.txt
+      - name: Azure login using client secret
+        uses: azure/login@v3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Discover tenbins and write manifest
+        run: python edge-ai/utility_scripts/tenbin_tar_workers.py --mode discover
+  workers:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        worker_id: [0, 1, 2, 3, 4, 5, 6, 7,
+                    8, 9, 10, 11, 12, 13, 14, 15]    
+    env:
+      AZURE_STORAGE_ACCOUNT_URL: https://citprodc8603uksa.blob.core.windows.net
+      AZURE_STATE_CONTAINER: github-actions-tenbin-tar-state
+      TENBIN_RUN_KEY: ${{ github.event.inputs.run_key }}
+      SOURCE_PREFIX: ${{ github.event.inputs.source_prefix }}
+      WORKER_ID: ${{ matrix.worker_id }}
+      TIF_DOWNLOAD_WORKERS: "16"
+      DOWNLOAD_MAX_CONCURRENCY_PER_BLOB: "1"
+      UPLOAD_MAX_CONCURRENCY: "16"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -r runnerrequirements.txt
+      - name: Azure login using client secret
+        uses: azure/login@v3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Process claimed tenbins
+        run: python src/tenbin_tar_workers.py --mode worker
