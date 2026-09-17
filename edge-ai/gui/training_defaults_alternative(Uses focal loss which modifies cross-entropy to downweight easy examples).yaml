@@ -1,0 +1,48 @@
+model:
+  architecture: resnet18
+  pretrained: true
+data:
+  image_size:
+  - 256
+  - 256
+  normalisation: imagenet
+training:
+  batch_size: 64
+  epochs: 2
+  learning_rate: 0.00005
+  optimizer: adam
+  weight_decay: 0.0001
+  num_workers: 8
+  val_fraction: 0.2
+  seed: 1337
+  early_stopping:
+    enabled: true
+    monitor: val_loss
+    mode: min
+    patience: 5
+    min_delta: 0.0
+    warmup_epochs: 1
+  logging:
+    curve_csv: training_curve.csv
+    curve_png: training_curve.png
+    confusion_matrix_csv: confusion_matrix.csv
+    confusion_matrix_png: confusion_matrix.png
+  loss:
+    name: focal
+    focal_gamma: 2.0
+  class_weighting:
+    enabled: true
+    minority:
+      mode: below_fraction
+      fraction: 0.2
+      multiplier: 3.0        
+  threshold_calibration:
+    enabled: false
+    target: minority      # minority | all | list
+    objective: min_cost   # min_cost | maximize_fbeta
+    fn_cost: 5.0          # used when objective == min_cost
+    fp_cost: 1.0          # used when objective == min_cost
+    beta: 2.0             # used when objective == maximize_fbeta
+    grid_size: 201        # number of thresholds in [0,1]
+output:
+  model_filename: model.pt
