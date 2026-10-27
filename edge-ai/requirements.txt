@@ -37,7 +37,7 @@ oauthlib==4.0.0
 opencv-python==5.0.0.93
 packaging==23.1
 pandas
-pillow==12.3.0
+pillow==13.0.0
 protobuf==5.29.6
 pycparser==2.21
 pyparsing==3.0.9
